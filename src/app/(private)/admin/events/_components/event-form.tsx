@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select'
 import { createEvent, updateEventById } from '@/actions/events'
 import { uploadFilesAndGetUrls } from '@/actions/file-uploads'
+import { IEvent } from '@/interfaces'
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -86,6 +87,10 @@ function EventForm({ formType, initialData, eventId, existingImages }: EventForm
     setExistingImageUrls((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const handleReset = () => {
+    form.reset()
+  }
+
   async function onSubmit(data: FormData) {
     setIsSubmitting(true)
     try {
@@ -108,7 +113,7 @@ function EventForm({ formType, initialData, eventId, existingImages }: EventForm
       const allImages = [...(existingImageUrls || []), ...imageUrls]
 
       // Create event payload with form data and image URLs
-      const eventPayload: Partial<import("@/interfaces").IEvent> = {
+      const eventPayload: Partial<IEvent> = {
         title: data.title,
         small_description: data.small_description,
         full_description: data.full_description,
@@ -350,8 +355,6 @@ function EventForm({ formType, initialData, eventId, existingImages }: EventForm
         </div>
       </div>
 
-
-
       {/* Capacity and Status in one row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Capacity */}
@@ -504,7 +507,7 @@ function EventForm({ formType, initialData, eventId, existingImages }: EventForm
               ? 'Create Event'
               : 'Update Event'}
         </Button>
-        <Button type="button" variant="outline">
+        <Button type="button" variant="outline" onClick={handleReset}>
           Reset
         </Button>
       </div>

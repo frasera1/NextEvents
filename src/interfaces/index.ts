@@ -48,3 +48,15 @@ export interface IBooking {
   total_amount?: number
   status?: string
 }
+
+export interface IDashboardStats {
+  totalUsers: number
+  totalEvents: number
+  totalBookings: number
+  totalRevenue: number
+  upcomingBookings: number
+  completedBookings: number
+  upcomingEvents: number
+  completedEvents: number
+}
+

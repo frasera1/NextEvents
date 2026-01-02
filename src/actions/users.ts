@@ -13,46 +13,46 @@ export const registerUser = async (payload: Partial<IUser>) => {
       .from("user_profiles")
       .select("*")
       .eq("email", payload.email)
-      .single();
+      .single()
 
     if (existingUserResponse.error && existingUserResponse.error.code !== 'PGRST116') {
       throw new Error(
         "Error checking existing user: " + existingUserResponse.error.message
-      );
+      )
     }
 
     if (existingUserResponse.data) {
       return {
         success: false,
         message: "User with this email already exists."
-      };
+      }
     }
 
-    const hashedPassword = await bcrypt.hash(payload.password || "", 10);
+    const hashedPassword = await bcrypt.hash(payload.password || "", 10)
 
     const newUser = {
       ...payload,
       password: hashedPassword,
       role: 'user',
       is_active: true
-    };
+    }
 
     const insertResponse = await supabase
       .from("user_profiles")
       .insert([newUser])
-      .select();
+      .select()
 
     if (insertResponse.error) {
       throw new Error(
         "Error creating user: " + insertResponse.error.message
-      );
+      )
     }
 
     return {
       success: true,
       message: "User registered successfully",
       data: insertResponse.data?.[0]
-    };
+    }
 
   } catch (error: any) {
     return {
@@ -65,37 +65,37 @@ export const registerUser = async (payload: Partial<IUser>) => {
 export const loginUser = async (email: string, password: string, role: string) => {
   try {
     const supabase = await createSupabaseClient()
-    
+
     const userResponse = await supabase
       .from("user_profiles")
       .select("*")
       .eq("email", email)
       .eq("role", role)
-      .single();
+      .single()
 
     if (userResponse.error) {
       return {
         success: false,
         message: "Invalid email or password."
-      };
+      }
     }
 
-    const user = userResponse.data as IUser;
+    const user = userResponse.data as IUser
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password)
 
     if (!isPasswordValid) {
       return {
         success: false,
         message: "Invalid email or password."
-      };
+      }
     }
 
     if (!user.is_active) {
       return {
         success: false,
         message: "Your account has been deactivated."
-      };
+      }
     }
 
     const token = jwt.sign(
@@ -106,7 +106,7 @@ export const loginUser = async (email: string, password: string, role: string) =
       },
       process.env.JWT_SECRET || "default-secret",
       { expiresIn: "7d" }
-    );
+    )
 
     return {
       success: true,
@@ -119,7 +119,7 @@ export const loginUser = async (email: string, password: string, role: string) =
         role: user.role,
         avatar: user.avatar
       }
-    };
+    }
 
   } catch (error: any) {
     return {
@@ -150,19 +150,102 @@ export const getLoggedInUser = async () => {
     if (userResponse.error) {
       throw new Error(
         "Error fetching user: " + userResponse.error.message
-      );
+      )
     }
 
     const user = userResponse.data as IUser
 
     return {
       success: true,
-      data : {
+      data: {
         ...user,
-        password:''
+        password: ''
       }
-    };
+    }
 
+
+  } catch (error) {
+    return {
+      success: false,
+      message: (error as Error).message
+    }
+  }
+}
+
+export const updateUserPassword = async (
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+) => {
+  try {
+    const supabase = await createSupabaseClient()
+
+    // Fetch the user's current password hash
+    const userResponse = await supabase
+      .from("user_profiles")
+      .select("password")
+      .eq("id", userId)
+      .single()
+
+    if (userResponse.error) {
+      throw new Error("Error fetching user: " + userResponse.error.message)
+    }
+
+    const user = userResponse.data
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password)
+
+    if (!isPasswordValid) {
+      return {
+        success: false,
+        message: "Current password is incorrect"
+      }
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+    // Update password in database
+    const updateResponse = await supabase
+      .from("user_profiles")
+      .update({ password: hashedPassword })
+      .eq("id", userId)
+
+    if (updateResponse.error) {
+      throw new Error("Error updating password: " + updateResponse.error.message)
+    }
+
+    return {
+      success: true,
+      message: "Password updated successfully"
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: (error as Error).message
+    }
+  }
+}
+
+export const updateUserAvatar = async (userId: string, avatarUrl: string) => {
+  try {
+    const supabase = await createSupabaseClient()
+
+    const updateResponse = await supabase
+      .from("user_profiles")
+      .update({ avatar: avatarUrl })
+      .eq("id", userId)
+
+    if (updateResponse.error) {
+      throw new Error("Error updating avatar: " + updateResponse.error.message)
+    }
+
+    return {
+      success: true,
+      message: "Profile picture updated successfully",
+      data: avatarUrl
+    }
   } catch (error) {
     return {
       success: false,

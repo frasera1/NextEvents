@@ -35,9 +35,9 @@ async function EditEventPage({ params }: EditEventPageProps) {
           
           <div>
             <p className="text-sm font-medium text-muted-foreground mb-1">Guests</p>
-            {event.guests && event.guests.length > 0 ? (
+            {(event.guests ?? []).length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {event.guests.map((guest, index) => (
+                {event.guests?.map((guest, index) => (
                   <span
                     key={index}
                     className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary/10 text-primary border border-primary/20"

@@ -1,7 +1,11 @@
+import PageTitle from "@/components/ui/page-title"
+import ProfileCard from "@/components/profile-card"
+
 function AdminProfilePage() {
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-foreground">Admin Profile</h1>
+    <div className="space-y-6">
+      <PageTitle title="Admin Profile" />
+      <ProfileCard />
     </div>
   )
 }

@@ -132,3 +132,36 @@ export const getAllEvents = async () => {
     }
   }
 }
+
+export const getUpcomingEvents = async (limit?: number) => {
+  try {
+    const supabase = await createSupabaseClient()
+    const today = new Date().toISOString().split('T')[0] // Get today's date in YYYY-MM-DD format
+
+    let query = supabase
+      .from("events")
+      .select("*")
+      .gte("date", today)
+      .order("date", { ascending: true })
+
+    if (limit) {
+      query = query.limit(limit)
+    }
+
+    const response = await query
+
+    if (response.error) {
+      throw new Error("Error fetching upcoming events: " + response.error.message)
+    }
+
+    return {
+      success: true,
+      data: response.data as IEvent[]
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.message
+    }
+  }
+}

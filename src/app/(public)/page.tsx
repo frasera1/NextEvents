@@ -1,10 +1,15 @@
-'use client';
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Calendar, Users, Sparkles, ArrowRight, Music, MapPin, Clock } from "lucide-react"
+import { getUpcomingEvents } from "@/actions/events"
+import { getLoggedInUser } from "@/actions/users"
+import EventCard from "./_components/event-card"
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Calendar, Users, Sparkles, ArrowRight, Music, MapPin, Clock } from "lucide-react";
-
-export default function Homepage() {
+export default async function Homepage() {
+  const eventsResponse = await getUpcomingEvents(6)
+  const events = eventsResponse.success ? eventsResponse.data : []
+  const userResponse = await getLoggedInUser()
+  const isLoggedIn = userResponse.success
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -54,9 +59,11 @@ export default function Homepage() {
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline">
-              Explore Events
-            </Button>
+            <Link href="#events">
+              <Button size="lg" variant="outline">
+                Explore Events
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -110,38 +117,19 @@ export default function Homepage() {
           <h2 className="text-4xl font-bold text-center mb-12 text-foreground">
             Upcoming Events
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div
-                key={i}
-                className="rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow bg-card"
-              >
-                <div className="h-48 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                  <Music className="w-12 h-12 text-primary/40" />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-lg font-bold mb-2 text-foreground">Event Title {i}</h3>
-                  <div className="space-y-2 mb-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>Dec {15 + i}, 2025</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      <span>New York, NY</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      <span>7:00 PM</span>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="w-full">
-                    Learn More
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+          {events && events.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.map((event) => (
+                <EventCard key={event.id} event={event} isLoggedIn={isLoggedIn} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Music className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <p className="text-xl text-muted-foreground">No upcoming events at the moment.</p>
+              <p className="text-sm text-muted-foreground mt-2">Check back soon for new events!</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -210,5 +198,5 @@ export default function Homepage() {
         </div>
       </footer>
     </div>
-  );
+  )
 }
