@@ -129,14 +129,14 @@ export default function AdminUsersPage() {
       ) : (
         <div className="border border-border rounded-lg bg-card">
           <Table>
-            <TableHeader>
-              <TableRow>
+            <TableHeader className="bg-muted">
+              <TableRow className="hover:bg-muted/70">
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -147,8 +147,8 @@ export default function AdminUsersPage() {
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${user.role === "admin"
-                          ? "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400"
-                          : "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
+                        ? "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400"
+                        : "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
                         }`}
                     >
                       {user.role}
@@ -157,8 +157,8 @@ export default function AdminUsersPage() {
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${user.is_active
-                          ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                          : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+                        ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                        : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
                         }`}
                     >
                       {user.is_active ? "Active" : "Inactive"}
@@ -167,7 +167,7 @@ export default function AdminUsersPage() {
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDateTime(user.created_at)}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>
                     <UserActionsCell
                       user={user}
                       onEdit={() => handleEditUser(user)}

@@ -4,11 +4,12 @@ import { createSupabaseClient } from "@/config/supabase-config"
 import { IBooking } from "@/interfaces"
 import { getLoggedInUser } from "./users"
 import { updateTicketType } from "./events-ticket-types"
+import { sendBookingConfirmationMail } from "./mails"
 
 export const createBooking = async (payload: Partial<IBooking>) => {
   try {
     const supabase = await createSupabaseClient()
-    
+
     // Get the logged-in user
     const userResponse = await getLoggedInUser()
     if (!userResponse.success || !userResponse.data) {
@@ -107,6 +108,15 @@ export const createBookingsForTickets = async (
       })
     }
 
+    // Send confirmation emails for each booking (non-blocking)
+    if (createdBookings && createdBookings.length > 0) {
+      for (const booking of createdBookings) {
+        sendBookingConfirmationMail(booking.id).catch((error) => {
+          console.error(`Failed to send email for booking ${booking.id}:`, error)
+        })
+      }
+    }
+
     return {
       success: true,
       message: "Bookings created successfully",
@@ -203,7 +213,7 @@ export const getBookingsByEventId = async (eventId: number) => {
 export const getAllBookings = async () => {
   try {
     const supabase = await createSupabaseClient()
-    
+
     // Get all bookings
     const { data: bookings, error: bookingsError } = await supabase
       .from("bookings")
@@ -273,16 +283,16 @@ export const cancelBooking = async (bookingId: number) => {
 
     // For admin, allow cancelling any booking; for users, verify ownership
     const isAdmin = userResponse.data.role === 'admin'
-    
+
     let bookingQuery = supabase
       .from("bookings")
       .select("*")
       .eq("id", bookingId)
-    
+
     if (!isAdmin) {
       bookingQuery = bookingQuery.eq("user_id", parseInt(userResponse.data.id))
     }
-    
+
     const { data: booking, error: fetchError } = await bookingQuery.single()
 
     if (fetchError || !booking) {

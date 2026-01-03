@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { getAllBookings, cancelBooking } from "@/actions/bookings"
+import { sendBookingConfirmationMail } from "@/actions/mails"
 import PageTitle from "@/components/ui/page-title"
 import {
   Table,
@@ -20,9 +21,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { formatDate, formatDateTime } from "@/lib/utils"
 import toast from "react-hot-toast"
 import { useRouter } from "next/navigation"
+import { Mail } from "lucide-react"
 
 interface BookingWithRelations {
   id: number
@@ -53,6 +61,7 @@ function AdminBookingsPage() {
   const [isCancelOpen, setIsCancelOpen] = useState(false)
   const [bookingToCancel, setBookingToCancel] = useState<number | null>(null)
   const [isCancelling, setIsCancelling] = useState(false)
+  const [sendingEmailId, setSendingEmailId] = useState<number | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -108,6 +117,22 @@ function AdminBookingsPage() {
     }
   }
 
+  const handleSendEmail = async (bookingId: number) => {
+    setSendingEmailId(bookingId)
+    try {
+      const result = await sendBookingConfirmationMail(bookingId)
+      if (result.success) {
+        toast.success("Confirmation email sent successfully")
+      } else {
+        toast.error(result.message || "Failed to send email")
+      }
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred while sending email")
+    } finally {
+      setSendingEmailId(null)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PageTitle title="All Bookings" />
@@ -160,15 +185,14 @@ function AdminBookingsPage() {
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`px-2 py-1 text-xs rounded-full font-medium ${
-                          booking.status === "confirmed"
+                        className={`px-2 py-1 text-xs rounded-full font-medium ${booking.status === "confirmed"
                             ? "bg-green-100 text-green-800"
                             : booking.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : booking.status === "cancelled"
-                            ? "bg-red-900/10 text-red-900 border border-red-900/20"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
+                              ? "bg-yellow-100 text-yellow-800"
+                              : booking.status === "cancelled"
+                                ? "bg-red-900/10 text-red-900 border border-red-900/20"
+                                : "bg-gray-100 text-gray-800"
+                          }`}
                       >
                         {booking.status || "Unknown"}
                       </span>
@@ -180,15 +204,36 @@ function AdminBookingsPage() {
                       {formatDateTime(booking.created_at)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {booking.status !== "cancelled" && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleCancelClick(booking.id)}
-                        >
-                          Cancel
-                        </Button>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {booking.status !== "cancelled" && (
+                          <>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => handleSendEmail(booking.id)}
+                                    disabled={sendingEmailId === booking.id}
+                                  >
+                                    <Mail className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Send confirmation email</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleCancelClick(booking.id)}
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -204,7 +249,7 @@ function AdminBookingsPage() {
           <DialogHeader>
             <DialogTitle>Cancel Booking</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel this booking? This action cannot be undone. 
+              Are you sure you want to cancel this booking? This action cannot be undone.
               The tickets will be released and made available for others.
             </DialogDescription>
           </DialogHeader>
